@@ -6,7 +6,7 @@ CREATE TABLE Users (
     email VARCHAR(100) UNIQUE NOT NULL,
     phone_number VARCHAR(15),
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) CHECK(role IN ('Customer', 'Staff', 'Manager', 'Admin')) NOT NULL,
+    role ENUM('Customer', 'Staff', 'Manager', 'Admin') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE Tables (
     table_id INT AUTO_INCREMENT PRIMARY KEY,
     table_number INT NOT NULL UNIQUE,
     capacity INT NOT NULL CHECK(capacity > 0),
-    status VARCHAR(50) CHECK(status IN ('Available', 'Occupied', 'Reserved')) NOT NULL
+    status ENUM('Available', 'Occupied', 'Reserved') NOT NULL
 );
 
 -- 3. Reservations Table
@@ -24,7 +24,7 @@ CREATE TABLE Reservations (
     user_id INT NOT NULL,
     table_id INT NOT NULL,
     reservation_time TIMESTAMP NOT NULL,
-    status VARCHAR(50) CHECK(status IN ('Pending', 'Confirmed', 'Cancelled')) NOT NULL,
+    status ENUM('Pending', 'Confirmed', 'Cancelled') NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (table_id) REFERENCES Tables(table_id) ON DELETE CASCADE
 );
@@ -42,7 +42,7 @@ CREATE TABLE Menu_Items (
     item_name VARCHAR(100) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL CHECK(price >= 0),
-    availability VARCHAR(50) CHECK(availability IN ('Available', 'Out of Stock')) NOT NULL,
+    availability ENUM('Available', 'Out of Stock') NOT NULL,
     FOREIGN KEY (category_id) REFERENCES Menu_Categories(category_id) ON DELETE CASCADE
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE Orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     table_id INT,
-    order_status VARCHAR(50) CHECK(order_status IN ('Pending', 'In Progress', 'Completed', 'Cancelled')) NOT NULL,
+    order_status ENUM('Pending', 'In Progress', 'Completed', 'Cancelled') NOT NULL,
     order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_price DECIMAL(10, 2) NOT NULL CHECK(total_price >= 0),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
@@ -74,7 +74,7 @@ CREATE TABLE Online_Orders_And_Delivery (
     delivery_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     delivery_address TEXT NOT NULL,
-    delivery_status VARCHAR(50) CHECK(delivery_status IN ('Pending', 'Out for Delivery', 'Delivered')) NOT NULL,
+    delivery_status ENUM('Pending', 'Out for Delivery', 'Delivered') NOT NULL,
     assigned_driver_id INT NOT NULL,
     estimated_delivery_time TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE,
@@ -85,8 +85,8 @@ CREATE TABLE Online_Orders_And_Delivery (
 CREATE TABLE Payments (
     payment_id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
-    payment_method VARCHAR(50) CHECK(payment_method IN ('Cash', 'Credit Card', 'PayPal')) NOT NULL,
-    payment_status VARCHAR(50) CHECK(payment_status IN ('Paid', 'Pending', 'Failed')) NOT NULL,
+    payment_method ENUM('Cash', 'Credit Card', 'PayPal') NOT NULL,
+    payment_status ENUM('Paid', 'Pending', 'Failed') NOT NULL,
     payment_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES Orders(order_id) ON DELETE CASCADE
 );
@@ -95,7 +95,7 @@ CREATE TABLE Payments (
 CREATE TABLE Staff (
     staff_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    position VARCHAR(50) CHECK(position IN ('Waiter', 'Chef', 'Manager', 'Delivery')) NOT NULL,
+    position ENUM('Waiter', 'Chef', 'Manager', 'Delivery') NOT NULL,
     salary DECIMAL(10, 2) NOT NULL CHECK(salary >= 0),
     hire_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
