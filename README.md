@@ -174,4 +174,174 @@
         FOREIGN KEY (last_checker_staff_id) REFERENCES Staff(staff_id)
       );
 
-    
+## Views
+  ### 庫存預警
+    CREATE VIEW  Low_Stock_Alert AS
+    SELECT 
+        i.item_name AS 物品名稱,
+        i.stock_quantity AS 當前庫存,
+        s.supplier_name AS 供應商,
+        s.contact_info AS 聯絡方式,
+        s.address AS 供應商地址,
+    CASE 
+        WHEN i.stock_quantity < 10 THEN '緊急補貨'
+        WHEN i.stock_quantity < 20 THEN '需要補貨'
+        ELSE '庫存充足'
+    END AS 庫存狀態
+    FROM 
+        Inventory i
+    JOIN 
+        Suppliers s ON i.supplier_id = s.supplier_id
+    WHERE 
+        i.stock_quantity < 20
+    ORDER BY 
+        i.stock_quantity ASC;
+
+  ### 今日訂單總覽
+    CREATE VIEW Today_Orders_Summary AS
+    SELECT 
+        o.order_id AS 訂單編號,
+        t.table_number AS 桌號,
+        o.total_price AS 總金額,
+        o.order_time AS 下單時間
+    FROM 
+        Orders o
+    JOIN 
+        Tables t ON o.table_id = t.table_id
+    WHERE 
+        DATE(o.order_time) = CURDATE()
+    GROUP BY 
+        o.order_id
+    ORDER BY 
+        o.order_id ASC;
+
+ ### 菜單總覽
+    CREATE VIEW Menu AS
+    SELECT
+      mi.item_name,
+      mi.description,
+      mi.price,
+      mc.category_name
+    FROM
+      Menu_Items mi
+    JOIN
+      Menu_Categories mc ON mi.category_id =              
+      mc.category_id
+    WHERE
+      mi.availability = 'Available';
+
+  ### 每月銷售報表
+    CREATE VIEW Monthly_Sales_Report AS
+    SELECT
+      DATE_FORMAT(o.order_time, '%Y-%m') AS 月份,
+      COUNT(o.order_id) AS 訂單總數,
+      (SELECT COUNT(*) FROM Orders WHERE order_status = 'Cancelled'
+      AND DATE_FORMAT(order_time, '%Y-%m') = DATE_FORMAT(o.order_time, '%Y-%m')) AS 取消訂單數,
+      (SELECT SUM(total_price) FROM Orders WHERE order_status = 'Completed'
+      AND DATE_FORMAT(order_time, '%Y-%m') = DATE_FORMAT(o.order_time, '%Y-%m')) AS 完成訂單總額,
+      (
+        SELECT p.payment_method
+        FROM Payments p
+        JOIN Orders o2 ON p.order_id = o2.order_id
+        WHERE DATE_FORMAT(o2.order_time, '%Y-%m') = DATE_FORMAT(o.order_time, '%Y-%m')
+        GROUP BY p.payment_method
+        ORDER BY COUNT(p.payment_id) DESC
+        LIMIT 1
+      ) AS 最常用支付方式
+    FROM
+      Orders o
+    GROUP BY
+      DATE_FORMAT(o.order_time, '%Y-%m')
+    ORDER BY
+      月份 DESC;
+
+  ### 待處裡訂位
+    CREATE VIEW Pending_Reservations_View AS
+    SELECT 
+        r.reservation_id AS 預訂編號,
+        u.name AS 客戶姓名,
+        u.phone_number AS 客戶電話,
+        t.table_number AS 桌號,
+        t.capacity AS 座位數,
+        r.reservation_time AS 預訂時間,
+        r.status AS 預訂狀態
+    FROM 
+        Reservations r
+    JOIN 
+        Users u ON r.user_id = u.user_id
+    JOIN 
+        Tables t ON r.table_id = t.table_id
+    WHERE 
+        r.status = 'Pending'
+    ORDER BY 
+        r.reservation_time ASC;
+        
+  ### 員工月出勤時數
+    CREATE OR REPLACE VIEW Staff_Monthly_Hours AS
+    SELECT 
+        s.staff_id AS 員工編號,
+        u.name AS 員工姓名,
+        s.position AS 職位,
+        SUM(TIMESTAMPDIFF(HOUR, a.check_in_time, a.check_out_time)) AS 當月總工作時數
+    FROM 
+        Staff s
+    JOIN 
+        Users u ON s.user_id = u.user_id
+    JOIN 
+        Attendance a ON s.staff_id = a.staff_id
+    WHERE 
+        YEAR(a.check_in_time) = YEAR(CURRENT_DATE) AND MONTH(a.check_in_time) = MONTH(CURRENT_DATE)
+    GROUP BY 
+        s.staff_id, u.name, s.position
+    ORDER BY 
+        s.staff_id;
+
+  ### 待處理訂單
+    CREATE VIEW Pending_Orders_View AS
+    SELECT 
+        o.order_id AS 訂單編號,
+        t.table_number AS 桌號,
+        o.order_time AS 下單時間,
+        o.total_price AS 總金額,
+        GROUP_CONCAT(mi.item_name SEPARATOR ', ') AS 餐點項目,
+        o.order_status AS 訂單狀態
+    FROM 
+        Orders o
+    JOIN 
+        Tables t ON o.table_id = t.table_id
+    JOIN 
+        Order_Items oi ON o.order_id = oi.order_id
+    JOIN 
+        Menu_Items mi ON oi.item_id = mi.item_id
+    WHERE 
+        o.order_status IN ('Pending', 'In Progress')
+    GROUP BY 
+        o.order_id
+    ORDER BY 
+        o.order_time;
+## 工作分配
+  ### 胡晉嘉
+    -Schema設計-25%
+    -ER-Diagram繪製-25%
+    -View建置-25%
+    -資料輸入-25%
+    -PPT製作-100%
+  ### 張鈞凱
+    -系統安裝-25%
+    -資料庫建置-50%
+    -Schema設計-25%
+    -ER-Diagram繪製-50%
+    -View建置-75%
+  ### 楊政愷
+    -系統安裝-75%
+    -資料庫建置-25%
+    -Schema設計-25%
+    -資料輸入-25%
+    -Word製作-25%
+  ### 林震宇
+    -資料庫建置-25%
+    -Schema設計-25%
+    -ER-Diagram繪製-25%
+    -資料輸入-50%
+    -Word製作-75%
+
