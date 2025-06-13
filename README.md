@@ -14,7 +14,7 @@
   - 員工
     - 登入系統與身份辨識
     - 查看訂位與訂單資訊
-    - 接收廚房點餐通知
+    - 接收廚房點餐通知  
     - 打卡上下班與出勤記錄
   - 管理員
     - 使用者與員工管理
@@ -34,3 +34,144 @@
 ## ER圖
   <img width="1223" alt="截圖 2025-04-23 上午11 24 07" src="https://github.com/user-attachments/assets/04556f0c-58f8-4cea-8591-f68f85112b01" />
 
+## Schema
+  ### Users
+      CREATE TABLE Users (
+         user_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+         name VARCHAR(100) NOT NULL,
+         email VARCHAR(100) UNIQUE,
+         phone_number VARCHAR(10) NOT NULL CHECK (phone_number LIKE '09________'),
+         role ENUM('Customer', 'Staff ', 'Admin') NOT NULL,
+         created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         PRIMARY KEY (user_id)
+      );
+    
+  ### Accounts
+      CREATE TABLE Accounts (
+        account_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(64) NOT NULL,
+        PRIMARY KEY (account_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+    );
+    
+  ### Tables
+      CREATE TABLE Tables (
+        table_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        table_number INT UNSIGNED NOT NULL CHECK (table_number > 0 AND table_number <= 100),
+        capacity INT UNSIGNED NOT NULL CHECK (capacity > 0 AND capacity <= 100),
+        status ENUM('Available', 'Occupied', 'Reserved') NOT NULL,
+        PRIMARY KEY (table_id)
+      );
+
+  ### Reservations
+      CREATE TABLE Reservations (
+        reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        table_id INT UNSIGNED NOT NULL,
+        reservation_time DATETIME NOT NULL,
+        status ENUM('Pending', 'Confirmed', 'Cancelled') NOT NULL,
+        PRIMARY KEY (reservation_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id),
+        FOREIGN KEY (table_id) REFERENCES Tables(table_id)
+      );
+
+  ### Menu_Categories
+      CREATE TABLE Menu_Categories (
+        category_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        category_name VARCHAR(100) NOT NULL,
+        PRIMARY KEY (category_id)
+      );
+
+  ### Menu_Items
+      CREATE TABLE Menu_Items (
+        item_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        category_id INT UNSIGNED NOT NULL,
+        item_name VARCHAR(20) NOT NULL,
+        description VARCHAR(100),
+        price INT UNSIGNED NOT NULL CHECK (price > 0),
+        availability ENUM('Available', 'Out of Stock') NOT NULL,
+        PRIMARY KEY (item_id),
+        FOREIGN KEY (category_id) REFERENCES Menu_Categories(category_id)
+      );
+
+  # Orders
+      CREATE TABLE Orders (
+        order_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        table_id INT UNSIGNED NOT NULL,
+        order_status ENUM('Pending', 'In Progress', 'Completed', 'Cancelled') NOT NULL,
+        order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total_price INT UNSIGNED NOT NULL CHECK (total_price >= 0),
+        PRIMARY KEY (order_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id),
+        FOREIGN KEY (table_id) REFERENCES Tables(table_id)
+      );
+
+  ### Order_Items
+      CREATE TABLE Order_Items (
+        order_item_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        order_id INT UNSIGNED NOT NULL,
+        item_id INT UNSIGNED NOT NULL,
+        quantity INT UNSIGNED NOT NULL CHECK (quantity > 0),
+        PRIMARY KEY (order_item_id),
+        FOREIGN KEY (order_id) REFERENCES Orders(order_id),
+        FOREIGN KEY (item_id) REFERENCES Menu_Items(item_id)
+      );
+
+  ### Payments
+      CREATE TABLE Payments (
+        payment_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        order_id INT UNSIGNED NOT NULL,
+        payment_method ENUM('Cash', 'Credit Card', 'online payment') NOT NULL,
+        payment_status ENUM('Paid', 'Pending', 'Failed') NOT NULL,
+        payment_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (payment_id),
+        FOREIGN KEY (order_id) REFERENCES Orders(order_id)
+      );
+
+  ### Staff
+      CREATE TABLE Staff (
+        staff_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id INT UNSIGNED NOT NULL,
+        position ENUM('Waiter', 'Chef', 'Manager') NOT NULL,
+        salary INT NOT NULL CHECK (salary > 0),
+        hire_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (staff_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+      );
+
+  ### Attendance
+      CREATE TABLE Attendance (
+        attendance_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        staff_id INT UNSIGNED NOT NULL,
+        check_in_time TIMESTAMP NOT NULL,
+        check_out_time TIMESTAMP NOT NULL,
+        PRIMARY KEY (attendance_id),
+        FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+      );
+
+  ### Supliers
+      CREATE TABLE Suppliers (
+        supplier_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        supplier_name VARCHAR(100) NOT NULL,
+        contact_info VARCHAR(100),
+        address VARCHAR(100),
+        PRIMARY KEY (supplier_id)
+      );
+
+  ### Inventoriy
+      CREATE TABLE Inventory (
+        inventory_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        item_name VARCHAR(100) NOT NULL,
+        stock_quantity INT UNSIGNED NOT NULL CHECK (stock_quantity >= 0),
+        supplier_id INT UNSIGNED NOT NULL,
+        last_check_time TIMESTAMP,
+        last_checker INT UNSIGNED,
+        PRIMARY KEY (inventory_id),
+        FOREIGN KEY (supplier_id) REFERENCES Suppliers(supplier_id)
+        FOREIGN KEY (last_checker_staff_id) REFERENCES Staff(staff_id)
+      );
+
+    
