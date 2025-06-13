@@ -32,7 +32,7 @@
   - 待處理訂單:廚房與外場協同作業的訂單處理中心
 
 ## ER圖
-  <img width="1223" alt="截圖 2025-04-23 上午11 24 07" src="https://github.com/user-attachments/assets/04556f0c-58f8-4cea-8591-f68f85112b01" />
+  ![image](https://github.com/user-attachments/assets/2993b695-3f8d-4c39-80b6-0c6e55dff029)
 
 ## Schema
   ### Users
