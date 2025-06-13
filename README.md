@@ -174,6 +174,111 @@
         FOREIGN KEY (last_checker_staff_id) REFERENCES Staff(staff_id)
       );
 
+## 完整性限制
+### Users (使用者)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| user_id         | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| name            | VARCHAR(100)                | NOT NULL   | 最多 100 字元，超過無法儲存                                              |
+| email           | VARCHAR(100)                | NOT NULL   | 最多 100 字元，唯一，需含 @，超過無法儲存                                |
+| phone_number    | VARCHAR(10)                 | NOT NULL   | 10 字元，前兩位為 '09'，後八位為 00000000 至 99999999，例：0912345678    |
+| role            | ENUM('Customer', 'Staff', 'Admin') | NOT NULL   | 限定為 Customer、Staff、Admin                                             |
+| created_time    | TIMESTAMP                   | NOT NULL   | 預設為系統目前時間（CURRENT_TIMESTAMP）                                    |
+
+### Accounts (帳號)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| account_id      | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| user_id         | INT UNSIGNED                | NOT NULL   | 參照 Users(user_id)，刪除時級聯刪除                                       |
+| username        | VARCHAR(100)                | NOT NULL   | 唯一，最多 100 字元，系統強制檢查                                         |
+| password        | VARCHAR(64)                 | NOT NULL   | SHA-256 加密，255 字元英數組合，避免明文儲存                              |
+
+### Reservations (訂位)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| reservation_id  | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| user_id         | INT UNSIGNED                | NOT NULL   | 參照 Users(user_id)                                                       |
+| table_id        | INT UNSIGNED                | NOT NULL   | 參照 Tables(table_id)                                                     |
+| reservation_time| DATETIME                    | NOT NULL   | 格式 YYYY-MM-DD HH:MM:SS                                                  |
+
+### Menu_Categories (菜單類別)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| category_id     | ENUM('Pending', 'Confirmed', 'Cancelled') | NOT NULL   | 限定為 Pending、Confirmed、Cancelled                                      |
+| category_name   | VARCHAR(100)                | NOT NULL   | 最多 100 字元，超過無法儲存                                              |
+
+### Menu_Items (菜單品項)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| item_id         | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| category_id     | INT UNSIGNED                | NOT NULL   | 參照 Menu_Categories(category_id)                                         |
+| item_name       | VARCHAR(20)                 | NOT NULL   | 最多 20 字元，超過無法儲存                                               |
+| description     | VARCHAR(100)                | YES        | 最多 100 字元，超過無法儲存                                              |
+| price           | INT UNSIGNED                | NOT NULL   | 必須大於 0                                                               |
+| availability    | ENUM('Available', 'Out of Stock') | NOT NULL   | 限定為 Available、Out of Stock                                            |
+
+### Orders (訂單)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| order_id        | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| user_id         | INT UNSIGNED                | NOT NULL   | 參照 Users(user_id)                                                       |
+| table_id        | INT UNSIGNED                | NOT NULL   | 參照 Tables(table_id)                                                     |
+| order_status    | ENUM('Pending', 'InProgress', 'Completed', 'Cancelled') | NOT NULL   | 限定為 Pending、InProgress、Completed、Cancelled                          |
+| order_time      | TIMESTAMP                   | NOT NULL   | 預設為系統目前時間（CURRENT_TIMESTAMP）                                    |
+| total_price     | INT UNSIGNED                | NOT NULL   | 不得為負                                                                 |
+
+### Order_Items (訂單品項)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| order_item_id   | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| order_id        | INT UNSIGNED                | NOT NULL   | 參照 Orders(order_id)                                                     |
+| item_id         | INT UNSIGNED                | NOT NULL   | 參照 Menu_Items(item_id)                                                  |
+| quantity        | INT UNSIGNED                | NOT NULL   | 必須大於 0                                                               |
+
+### Payments (付款方式)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| payment_id      | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| order_id        | INT UNSIGNED                | NOT NULL   | 參照 Orders(order_id)                                                     |
+| payment_method  | ENUM('Cash', 'Credit Card', 'online payment') | NOT NULL   | 限定為 Cash、Credit Card、online payment                                  |
+| payment_status  | ENUM('Paid', 'Pending', 'Failed') | NOT NULL   | 限定為 Paid、Pending、Failed                                              |
+| payment_time    | TIMESTAMP                   | NOT NULL   | 預設為系統目前時間（CURRENT_TIMESTAMP）                                    |
+
+### Staff (員工)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| staff_id        | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| user_id         | INT UNSIGNED                | NOT NULL   | 參照 Users(user_id)                                                       |
+| position        | ENUM('Waiter', 'Chef', 'Manager') | NOT NULL   | 限定為 Waiter、Chef、Manager                                              |
+| salary          | INT UNSIGNED                | NOT NULL   | 必須大於 0                                                               |
+| hire_date       | TIMESTAMP                   | NOT NULL   | 預設為系統目前時間（CURRENT_TIMESTAMP）                                    |
+
+### Attendance (出席)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| attendance_id   | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| staff_id        | INT UNSIGNED                | NOT NULL   | 參照 Staff(staff_id)                                                      |
+| check_in_time   | TIMESTAMP                   | NOT NULL   | 格式 YYYY-MM-DD HH:MM:SS                                                  |
+| check_out_time  | TIMESTAMP                   | NOT NULL   | 格式 YYYY-MM-DD HH:MM:SS                                                  |
+
+### Suppliers (供應者)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| supplier_id     | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| supplier_name   | VARCHAR(100)                | NOT NULL   | 最多 100 字元，超過無法儲存                                              |
+| contact_info    | VARCHAR(100)                | YES        | 最多 100 字元，超過無法儲存                                              |
+| address         | VARCHAR(100)                | YES        | 最多 100 字元，超過無法儲存                                              |
+
+### Inventory (庫存)
+| 欄位名稱        | 資料型態                     | 是否為null | 完整性限制                                                                 |
+|-----------------|-----------------------------|------------|---------------------------------------------------------------------------|
+| inventory_id    | INT UNSIGNED                | NOT NULL   | 範圍 1 到 4,294,967,295，自動遞增                                         |
+| item_name       | VARCHAR(100)                | NOT NULL   | 最多 100 字元，超過無法儲存                                              |
+| stock_quantity  | INT UNSIGNED                | NOT NULL   | 不得為負                                                                 |
+| supplier_id     | INT UNSIGNED                | NOT NULL   | 參照 Suppliers(supplier_id)                                               |
+| last_checker    | INT UNSIGNED                | NOT NULL   | 參照 Staff(staff_id)                                                      |
+| last_check_time | TIMESTAMP                   | NOT NULL   | 格式 YYYY-MM-DD HH:MM:SS                                                  |
+
 ## Views
   ### 庫存預警
     CREATE VIEW  Low_Stock_Alert AS
@@ -320,28 +425,27 @@
     ORDER BY 
         o.order_time;
 ## 工作分配
-  ### 胡晉嘉
-    -Schema設計-25%
-    -ER-Diagram繪製-25%
-    -View建置-25%
-    -資料輸入-25%
-    -PPT製作-100%
-  ### 張鈞凱
-    -系統安裝-25%
-    -資料庫建置-50%
-    -Schema設計-25%
-    -ER-Diagram繪製-50%
-    -View建置-75%
-  ### 楊政愷
-    -系統安裝-75%
-    -資料庫建置-25%
-    -Schema設計-25%
-    -資料輸入-25%
-    -Word製作-25%
-  ### 林震宇
-    -資料庫建置-25%
-    -Schema設計-25%
-    -ER-Diagram繪製-25%
-    -資料輸入-50%
-    -Word製作-75%
-
+### 胡晉嘉
+  - Schema設計-25%
+  - ER-Diagram繪製-25%
+  - View建置-25%
+  - 資料輸入-25%
+  - PPT製作-100%
+### 張鈞凱
+  - 系統安裝-25%
+  - 資料庫建置-50%
+  - Schema設計-25%
+  - ER-Diagram繪製-50%
+  - View建置-75%
+### 楊政愷
+  - 系統安裝-75%
+  - 資料庫建置-25%
+  - Schema設計-25%
+  - 資料輸入-25%
+  - Word製作-25%
+### 林震宇
+  - 資料庫建置-25%
+  - Schema設計-25%
+  - ER-Diagram繪製-25%
+  - 資料輸入-50%
+  - Word製作-75%
