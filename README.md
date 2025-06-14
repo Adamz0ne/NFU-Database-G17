@@ -96,7 +96,7 @@
         FOREIGN KEY (category_id) REFERENCES Menu_Categories(category_id)
       );
 
-  # Orders
+  ### Orders
       CREATE TABLE Orders (
         order_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
         user_id INT UNSIGNED NOT NULL,
